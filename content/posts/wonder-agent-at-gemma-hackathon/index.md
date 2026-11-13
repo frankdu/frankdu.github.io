@@ -48,13 +48,13 @@ Model provisioning requires downloads; inference runs locally afterward. The app
 
 For a child, performance is the time between asking a question and receiving something useful. Tokens per second explains only part of that experience.
 
-We built a Research Lab view with [two language-model workloads](./docs/BENCHMARKING.md). A fixed-token benchmark measures initialization, time to first token, and the rates at which the model processes its prompt and generates output. Repeatable input and output lengths help isolate runtime performance. A prompt playground exercises real prompts and separately measures engine loading, first visible text, and response completion. It also lets us observe engine reuse.
+We built a Research Lab view with [two language-model workloads](https://github.com/frankdu/hack_android_base/blob/main/docs/BENCHMARKING.md). A fixed-token benchmark measures initialization, time to first token, and the rates at which the model processes its prompt and generates output. Repeatable input and output lengths help isolate runtime performance. A prompt playground exercises real prompts and separately measures engine loading, first visible text, and response completion. It also lets us observe engine reuse.
 
 The distinction matters. A fast decoding rate can coexist with a long initialization delay. Native time to first token can differ from the time the app displays meaningful text. Neither measurement, by itself, tells us when a child hears the first spoken sentence.
 
 Results retain model hashes, backend, runtime, device information, and environmental readings such as thermal status. Warm-ups stay out of summaries. Our default three measured runs are exploratory; they cannot establish reliable tail latency. We also keep backend failures visible instead of silently switching to CPU and labeling the result as an accelerator run.
 
-[LiteRT](https://developers.google.com/edge/litert) provides conversion, optimization, and CPU, GPU, and NPU execution capabilities. In our app, acceleration remains specific to the artifact, runtime, and phone. Our [device validation](./docs/VALIDATION.md#photo-decoder-and-incomplete-json-fixes--october-20-2026) records Gemma E2B execution using Tensor G5 TPU text with GPU vision, but that does not establish TPU support for every model or for the diffusion pipelines. A compatible model file and a successful device run are both necessary.
+[LiteRT](https://developers.google.com/edge/litert) provides conversion, optimization, and CPU, GPU, and NPU execution capabilities. In our app, acceleration remains specific to the artifact, runtime, and phone. Our [device validation](https://github.com/frankdu/hack_android_base/blob/main/docs/VALIDATION.md#photo-decoder-and-incomplete-json-fixes--october-20-2026) records Gemma E2B execution using Tensor G5 TPU text with GPU vision, but that does not establish TPU support for every model or for the diffusion pipelines. A compatible model file and a successful device run are both necessary.
 
 ## Generating 10,000 presentation images with NVIDIA
 
@@ -86,7 +86,7 @@ Following the five-model exploration, our current Android LiteRT image catalog f
 
 The first challenge was packaging. The original SD-Turbo and SDXL-Turbo LiteRT exports stored FP32 weights and required large downloads. Quantization reduces the precision used to store those weights. Using model-specific export scripts and LiteRT CLI quantization, we produced compact bundles with dynamic INT8 encoder and denoiser weights and FP16 image-decoder (VAE) weights. Activations remain floating point.
 
-The [October 24 quantization audit](./docs/PIXEL_IMAGE_MODELS.md) records the change:
+The [October 24 quantization audit](https://github.com/frankdu/hack_android_base/blob/main/docs/PIXEL_IMAGE_MODELS.md) records the change:
 
 | Model      | Previous runtime download | Compact runtime download | Reduction |
 | ---------- | ------------------------: | -----------------------: | --------: |
@@ -107,7 +107,7 @@ Compatibility was another separate hurdle. The compact SD exports failed GPU gra
 
 ## Phone measurements changed the product design
 
-The compact models produced recognizable blue teapot images on a **Pixel 10 Pro Fold with Tensor G5**. Our [CPU smoke measurements](./docs/PIXEL_IMAGE_MODELS.md) were:
+The compact models produced recognizable blue teapot images on a **Pixel 10 Pro Fold with Tensor G5**. Our [CPU smoke measurements](https://github.com/frankdu/hack_android_base/blob/main/docs/PIXEL_IMAGE_MODELS.md) were:
 
 | Model                | Resolution / steps | Generation time | Peak worker RSS |
 | -------------------- | ------------------ | --------------: | --------------: |
