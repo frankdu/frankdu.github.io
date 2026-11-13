@@ -1,0 +1,15 @@
+baseURL: https://frankdu.github.io/
+languageCode: en-us
+title: frank notes
+theme: PaperMod
+
+params:
+    mainSections: [posts]
+    author: Frank Du
+    ShowReadingTime: true
+    showtoc: true
+    tocopen: true
+
+caches:
+    images:
+        dir: :cacheDir/images
