@@ -13,42 +13,42 @@ That assumption gave us an engineering problem: could we build a language learni
 
 Devices, electricity, downloads, and development still cost money. Local inference removes the per-request cloud inference bill; making the whole experience accessible remains a broader product challenge.
 
-Wonder Agent began as Frank's solo Android project for the Google Gemma Hardware Hackathon at [AGI House](https://www.agihouse.org/) on October 24. It won third place for Best Use of LiteRT, second place in the Mobile AI track, and the Best Use of Pixel / TPU award. We are continuing that work as **Curilo Wonder**. This article covers the hackathon project and the engineering documented as it has developed.
+Wonder Agent began as Frank's solo Android project for the Google Gemma Hardware Hackathon at [AGI House](https://www.agihouse.org/) on October 24. It won third place for Best Use of LiteRT, second place in the Mobile AI track, and the Best Use of Pixel / TPU award. We are continuing that work as **Curilo Wonder**. This article covers the hackathon project and the engineering work that followed.
 
 ## Why we started with words
 
 {{< youtube 5o3rZJnITXU >}}
 
-The motivation is personal. Frank's earlier work with the student NGO used technology to support education in rural China. After the hackathon, he teamed up with a software engineer friend to help launch it into a free education app.
+The motivation is personal. Frank's earlier work with a student NGO used technology to support education in rural China. After the hackathon, he teamed up with a software engineer friend to turn Wonder Agent into a free education app.
 
 We are both parents as well as builders, creating a learning app we want to use with our own children. Our priority is to make the time parents and children spend together more meaningful: exploring a picture, asking a question, and discovering something together. That shared experience guides our product decisions.
 
 English vocabulary gives us a focused place to begin. A word provides a concrete topic, a picture gives it a visual anchor, and conversation lets the child choose what to explore next. Our broader ambition is to help children discover the world through their questions.
 
-In the app, a child browses categories and words, taps a speaker to hear a word, or opens its assistant. Gemma introduces the concept and invites a question. The child can speak or type, hear the answer, and follow the spoken words through highlighted text. You can see it in the [video demo](https://www.youtube.com/shorts/5o3rZJnITXU).
+In the app, a child browses categories and words, taps a speaker to hear a word, or opens the assistant. Gemma introduces the concept and invites a question. The child can speak or type, hear the answer, and follow the spoken words through highlighted text. You can see it in the [video demo](https://www.youtube.com/shorts/5o3rZJnITXU).
 
 ## A local pipeline for conversations
 
 We use [LiteRT-LM](https://github.com/google-ai-edge/LiteRT-LM), Google's framework for running language models on edge devices, to run Gemma locally. Our Android integration supports Gemma 4 E2B and E4B artifacts, with backend selection governed by the model and device's capabilities.
 
-The AI assistant separates the jobs behind a voice interaction:
+At the hackathon, the AI assistant split each voice interaction into four steps:
 
 1. **Capture and transcribe.** The app records a question into memory and sends the audio to local Gemma with a transcription instruction.
 2. **Build the context.** A second request combines the transcript with the selected word, category, recent dialogue, and available illustration context.
 3. **Generate and check.** Gemma produces a short reply, which passes local safety checks before the app displays or speaks it.
 4. **Speak and highlight.** A separate offline text-to-speech engine produces the voice while the interface highlights the current words.
 
-_(Please note: after the hackathon we'd combined Step 1 and 2 later for faster user interactions.)_
+After the hackathon, we combined steps 1 and 2 to reduce response time.
 
 Gemma handles transcription, explanations, and image understanding. Separate TTS engines synthesize speech, and separate diffusion models power the image-generation experiments. Keeping those roles explicit helps us measure and improve each part.
 
-The engine is reused between transcription and response requests, avoiding repeated initialization. Each request gets bounded context, with recent text dialogue supplying conversational memory. The reply prompt asks for no more than fifty spoken words: answer length is a product decision that also affects waiting time.
+The hackathon pipeline reused the same engine for transcription and response requests to avoid repeated initialization. Each request uses bounded context, with recent text dialogue supplying conversational memory. The reply prompt asks for no more than fifty spoken words: answer length is a product decision that also affects waiting time.
 
 Model provisioning requires downloads; inference runs locally afterward. The app can also refresh vocabulary content and download voices, so offline inference should not be confused with an app that never uses the network.
 
 ## Measure the wait that matters
 
-For a child, performance is the time between asking a question and receiving something useful. Tokens per second explains only part of that experience.
+For a child, performance is the time between asking a question and receiving something useful. A tokens-per-second figure explains only part of that experience.
 
 We built a Research Lab view with [two language-model workloads](https://github.com/frankdu/hack_android_base/blob/main/docs/BENCHMARKING.md). A fixed-token benchmark measures initialization, time to first token, and the rates at which the model processes its prompt and generates output. Repeatable input and output lengths help isolate runtime performance. A prompt playground exercises real prompts and separately measures engine loading, first visible text, and response completion. It also lets us observe engine reuse.
 
@@ -70,7 +70,7 @@ The workstation figure measures throughput across the presentation batch. These 
 
 The same RTX 6000 Ada workstation, running Ubuntu, also hosted our model preparation work. We used **Codex with the [LiteRT CLI agent skill](https://github.com/google-ai-edge/LiteRT-CLI/blob/main/.agents/skills/litert_cli/SKILL.md)** and had Codex connect remotely to download models and carry out the conversion and packaging workflow. The skill gives the coding agent instructions for using LiteRT's tools, including conversion, quantization, and benchmarking. Model-specific scripts handled the details of the image pipelines.
 
-That workflow produced **five public LiteRT model packages**, published under [frankdu on Hugging Face](https://huggingface.co/frankdu/models). We created new conversions for SD-Turbo and SDXL-Turbo and reused existing LiteRT Community conversions for the other three, preserving their attribution. The published model cards describe each package's origin:
+That workflow produced **5 public LiteRT model packages**, published under [frankdu on Hugging Face](https://huggingface.co/frankdu/models). We created new conversions for SD-Turbo and SDXL-Turbo and reused existing LiteRT Community conversions for the other three, preserving their attribution. The published model cards describe each package's origin:
 
 | Public model package                                                                                                                                                     | Preparation and provenance                                                              |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
@@ -80,11 +80,11 @@ That workflow produced **five public LiteRT model packages**, published under [f
 | [Bonsai-Image-ternary-4B-LiteRT](https://huggingface.co/frankdu/Bonsai-Image-ternary-4B-LiteRT)                                                                          | Attributed LiteRT Community mirror with a runnable CPU example                          |
 | [iris-3b-Turbo-LiteRT](https://huggingface.co/frankdu/iris-3b-Turbo-LiteRT)                                                                                              | Attributed LiteRT Community mirror with reference engines                               |
 
-The packages include runnable examples, sample images, validation records, checksums, and source licenses. Each completed a desktop LiteRT CPU generation check. Publishing those artifacts gives other developers a starting point for reproducing the pipelines and testing their own devices. As of this writing, the models already incurred more than 3000 downloads.
+The packages include runnable examples, sample images, validation records, checksums, and source licenses. Each completed a desktop LiteRT CPU generation check. Publishing those artifacts gives other developers a starting point for reproducing the pipelines and testing their own devices. As of this writing, the models have been downloaded more than 3,000 times in total.
 
 ## Making image models practical to download
 
-Following the five-model exploration, our current Android LiteRT image catalog focuses on **SD-Turbo, SDXL-Turbo, and FLUX.2 Klein 4B**. The public releases preserve the broader work, and we also published compact SD-Turbo and SDXL-Turbo variants for phone use.
+After exploring these 5 model families, we narrowed our current Android LiteRT image catalog to **SD-Turbo, SDXL-Turbo, and FLUX.2 Klein 4B**. The public releases preserve the broader work, and we also published compact SD-Turbo and SDXL-Turbo variants for phone use.
 
 The first challenge was packaging. The original SD-Turbo and SDXL-Turbo LiteRT exports stored FP32 weights and required large downloads. Quantization reduces the precision used to store those weights. Using model-specific export scripts and LiteRT CLI quantization, we produced compact bundles with dynamic INT8 encoder and denoiser weights and FP16 image-decoder (VAE) weights. Activations remain floating point.
 
@@ -105,7 +105,7 @@ The consequences looked like model failures: incorrect conditioning in SD-Turbo 
 
 Both corrected pipelines then completed phone generation. This is the kind of work hidden behind a successful model conversion: tokenization, tensor ownership, graph loading, and cleanup all have to agree with the exported model.
 
-Compatibility was another separate hurdle. The compact SD exports failed GPU graph compilation on our tested Tensor G5 phone, including an attempt to put only the denoiser on GPU. We mark those combinations unavailable. Image TPU execution also requires separately compiled, validated bundles. Quantization solved a download problem; other runtime problems remained.
+Compatibility was another hurdle. The compact SD exports failed GPU graph compilation on our tested Tensor G5 phone, including an attempt to put only the denoiser on GPU. We mark those combinations unavailable. Image TPU execution also requires separately compiled, validated bundles. Quantization solved a download problem; other runtime problems remained.
 
 ## Phone measurements changed the product design
 
@@ -133,12 +133,20 @@ These choices matter as much as raw throughput. A child should understand when t
 
 ## The next step
 
-We plan to release **Curilo Wonder as a free education app for parents and children on both Android and iOS**. We are building it as a **not-for-profit project**, with the aim of helping families make the most of their time together. Keeping the app free reflects both that purpose and our broader vision of making learning more accessible.
+We plan to release **Curilo Wonder as a free education app for parents and children on both Android and iOS**. We are building it as a **not-for-profit project**, with the aim of helping families make the most of their time together. Keeping the app free reflects both that purpose and our broader vision of making learning more accessible. Follow our progress at [curilo.app](https://curilo.app).
 
 The hackathon gave us encouragement and a working foundation. The next step is to connect engineering progress to the learning experience: measure time to first audible speech on representative phones, validate more accelerator configurations, improve context selection, and evaluate the conversations with children and their caregivers.
 
-One detail from the build still makes us smile: Frank burned through 20+ GB on Google Fi and 7+ GB on AT&T Mobile. A friend's fiber connection rescued a few critical hours. Apparently, building offline AI takes quite a bit of downloading first. 😅
-
-Thank you to Google and [AGI House](https://www.agihouse.org/) for the hackathon, to the LiteRT team for the tools, and to the Google LiteRT and NVIDIA teams for inviting us to share this project. Follow our progress at [curilo.app](https://curilo.app).
-
 We want a child's next question to be an opportunity we can afford to answer. Wonder Agent is our first step toward making that possible on the device already in their hands.
+
+## Sparkles & Acknowledgement
+
+I went to the hackathon with my friends from Moissan Club. We usually hack on robotics together, and it was a joy to share the day with them. Congratulations to the team on winning **Best Use of Coral** for **Cross-Embodiment Gemma Harness**!
+
+For a few happy moments from the day, see [Moissan Club's hackathon recap](https://moissan.org/newsletter/gemma-awards/).
+
+One detail from the build still makes me smile: I burned through 20+ GB on Google Fi and 7+ GB on AT&T Mobile. A friend's fiber connection saved a few critical hours. Apparently, building offline AI takes quite a bit of downloading first. 😅
+
+Thank you to Google and [AGI House](https://www.agihouse.org/) for hosting the hackathon, to the LiteRT team for the tools, and to the Google LiteRT and NVIDIA teams for inviting us to share this project.
+
+![Our Gemma Hackathon Team](https://moissan.org/newsletter/gemma-awards/5.jpeg)
