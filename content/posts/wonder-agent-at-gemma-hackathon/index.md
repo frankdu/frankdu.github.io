@@ -17,6 +17,8 @@ Wonder Agent began as Frank's solo Android project for the Google Gemma Hardware
 
 ## Why we started with words
 
+{{< youtube 5o3rZJnITXU >}}
+
 The motivation is personal. Frank's earlier work with the student NGO used technology to support education in rural China. After the hackathon, he teamed up with a software engineer friend to help launch it into a free education app.
 
 We are both parents as well as builders, creating a learning app we want to use with our own children. Our priority is to make the time parents and children spend together more meaningful: exploring a picture, asking a question, and discovering something together. That shared experience guides our product decisions.
